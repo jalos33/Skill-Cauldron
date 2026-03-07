@@ -1,29 +1,17 @@
-# Skill Cauldron
+# Skill Cauldron – Collection of Claude Code Skills
 
-A collection of Claude Code skills for automating development tasks.
+Open-source skills for Claude Code agents. Each skill lives in its own folder under `/skills/`.
 
-## Installation
+## How to Use
 
-```bash
-npm install
-```
+1. Clone this repository
+2. Copy the desired skill folder to `~/.claude/skills/`
+3. The skill will be available when using Claude Code
 
-## Usage
+## Skills
 
-Initialize the skills in your Claude Code configuration and start using them to automate common development workflows.
+- [Documentation Generator](skills/documentation-generator/) - Auto-generate project documentation
 
-## API Reference
+## License
 
-This project includes a REST API with the following endpoints:
-
-### Skills Endpoints (`/api/routes/skills.js`)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/skills` | Get all skills |
-| GET | `/skills/:id` | Get a specific skill by ID |
-| POST | `/skills` | Create a new skill |
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+MIT

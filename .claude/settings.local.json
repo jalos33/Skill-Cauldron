@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      // Your existing allows (keep these if present)
+      "Bash(git add \"Documentation Generator/SKILL.md\")",
+      "Bash(git commit -m 'Complete Documentation Generator skill: full instructions, examples, tests')",
+      "Bash(git push origin main)",
+      "Bash(start https://github.com/jalos33/Skill_cauldron-)",
+      "Bash(git add README.md CHANGELOG.md)",
+      "Bash(git commit -m \"docs: initial documentation with README and changelog\")",
+
+      // Add any new permissions you need later
+      "Bash(mkdir -p \"skills/*\")",
+      "Bash(touch \"skills/*/SKILL.md\")",
+      "Bash(git add \"skills/*\")",
+      "Bash(git commit -m *)",
+      "Bash(git push origin main)"
+    ]
+  },
+  "environmentVariables": [
+    {
+      "name": "ANTHROPIC_BASE_URL",
+      "value": "http://localhost:1234/v1"
+    },
+    {
+      "name": "ANTHROPIC_AUTH_TOKEN",
+      "value": "lmstudio"
+    }
+  ]
+}
