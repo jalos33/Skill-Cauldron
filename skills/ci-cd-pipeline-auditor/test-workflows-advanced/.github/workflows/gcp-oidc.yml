@@ -1,0 +1,54 @@
+# GCP OIDC configuration for testing
+name: Deploy to Google Cloud
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: my-gcp-project
+  REGION: us-central1
+
+jobs:
+  deploy-gcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Issue: Using long-lived service account key instead of OIDC (security risk)
+      - name: Authenticate with long-lived credentials
+        run: |
+          echo ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }} | \
+            jq -r '.client_email' > /tmp/client_email.txt
+          echo ${{ secrets.GCP_PRIVATE_KEY }} > /tmp/private_key.json
+
+      # Issue: OIDC configured but missing required parameters
+      - name: Configure GCP via OIDC (incomplete)
+        uses: google-github-actions/auth@v2
+        with:
+          # Missing: workload_identity_provider
+          # Missing: service_account
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Issue: Action pinned to major version only
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: my-service
+          region: ${{ env.REGION }}
+
+      # Issue: Using @latest for GCP action (mutable)
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@latest
+
+      # Issue: Echoing secrets in run command
+      - name: Verify deployment
+        run: |
+          echo "Deployed to ${{ env.PROJECT_ID }}"
+          echo "Service account key: $GCP_PRIVATE_KEY"

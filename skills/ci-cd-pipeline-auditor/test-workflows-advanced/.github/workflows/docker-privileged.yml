@@ -1,0 +1,50 @@
+# Docker security issues for testing
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions: write-all
+
+env:
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Issue: Running Docker with --privileged flag (security risk)
+      - name: Run privileged container
+        uses: addnab/docker-run-action@v3
+        with:
+          options: --rm --privileged
+          image: docker.io/library/ubuntu:latest
+          run: |
+            ls -la /dev
+
+      # Issue: Container running as root user (security risk)
+      - name: Build and run as root
+        uses: addnab/docker-run-action@v3
+        with:
+          options: --rm
+          image: node:latest  # Using :latest tag (unpinned)
+          run: |
+            npm install
+            npm test
+
+      # Issue: Docker login exposing credentials in run command
+      - name: Login to Docker Hub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u myuser --password-stdin
+
+      # Issue: Pushing unpinned image tag
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: myapp:latest  # Unpinned latest tag
+
+      # Issue: Using latest action version without pinning
+      - uses: docker/setup-buildx-action@latest

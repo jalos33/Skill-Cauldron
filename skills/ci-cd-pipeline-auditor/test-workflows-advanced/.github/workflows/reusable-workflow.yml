@@ -1,0 +1,56 @@
+# Reusable workflow with security issues for testing
+name: Reusable Build and Test
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '20'
+    secrets:
+      API_KEY:
+        required: true
+
+permissions: write-all
+
+jobs:
+  reusable-build:
+    runs-on: ubuntu-latest
+    steps:
+      # Issue: Using actions from .github/workflows/ without version pinning
+      - uses: ./.github/workflows/shared-actions/setup-env.yml
+
+      # Issue: Unpinned branch reference for checkout
+      - uses: actions/checkout@main
+
+      # Issue: Major version only (no specific tag)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+
+      # Issue: Using another reusable workflow without version pinning
+      - uses: jos33/shared-actions/.github/workflows/build.yml@main
+
+      # Issue: Echoing secrets to stdout (security risk)
+      - name: Validate API key
+        run: |
+          echo "API Key is: ${{ secrets.API_KEY }}"
+          if [ "$API_KEY" = "" ]; then
+            echo "Error: API key required"
+            exit 1
+          fi
+
+      # Issue: Docker image using :latest tag (unpinned)
+      - name: Run tests in container
+        uses: addnab/docker-run-action@v3
+        with:
+          options: --rm
+          run: docker run node:latest npm test
+
+      # Issue: Using @master branch (mutable reference)
+      - uses: actions/cache@master
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}

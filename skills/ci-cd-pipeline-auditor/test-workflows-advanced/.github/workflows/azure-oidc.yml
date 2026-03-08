@@ -1,0 +1,57 @@
+# Azure OIDC configuration for testing
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AZURE_RESOURCE_GROUP: my-rg
+  AZURE_LOCATION: eastus
+
+jobs:
+  deploy-azure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Issue: Using Azure login with service principal secrets instead of OIDC
+      - name: Login to Azure with long-lived credentials
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Issue: OIDC login without proper configuration (missing use_oidc)
+      - name: Login with managed identity (incomplete)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          # Missing: use_oidc: true for federated credentials
+
+      - name: Deploy Azure Resource Manager template
+        uses: azure/arm-deploy@v2
+        with:
+          resource-group-name: ${{ env.AZURE_RESOURCE_GROUP }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          template: ./arm-template.json
+          parameters: location=${{ env.AZURE_LOCATION }}
+
+      # Issue: Using @latest for Azure action (mutable reference)
+      - name: Deploy Web App
+        uses: azure/webapps-deploy@latest
+        with:
+          app-name: my-webapp
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+
+      # Issue: Echoing subscription ID to logs
+      - name: Verify deployment
+        run: |
+          echo "Deployed to subscription: $AZURE_SUBSCRIPTION_ID"
+          az group show --name $AZURE_RESOURCE_GROUP
